@@ -1,0 +1,48 @@
+Here's everything you need, end to end.
+
+Files created
+File	Purpose
+weather_stock_server.py	FastMCP server with the two tools
+agent.py	LangChain/LangGraph agent that launches the server and runs demo queries
+requirements.txt	Pinned dependencies
+Environment variables
+Variable	Required?	Notes
+OPENWEATHER_API_KEY	Yes	Get a free key at openweathermap.org (takes ~10 min to activate)
+GEMINI_API_KEY	Yes (default provider)	Google AI Studio → Create API key
+GEMINI_MODEL	No	Default: gemini-2.0-flash
+LLM_PROVIDER	No	gemini (default) | anthropic | openai
+Install and run
+
+# 1. Create and activate a virtual environment
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+# 2. Install dependencies
+pip install -r requirements.txt
+
+# 3. Set environment variables (PowerShell)
+$env:OPENWEATHER_API_KEY = "your_openweather_key"
+$env:GEMINI_API_KEY      = "your_gemini_key"
+
+# 4. Run the agent (it starts the MCP server automatically)
+python agent.py
+Verify the server independently (isolate failures)
+The MCP Inspector lets you call each tool manually without the agent:
+
+
+# In the activated venv
+npx @modelcontextprotocol/inspector python weather_stock_server.py
+Open the URL it prints (usually http://localhost:5173). From the UI you can:
+
+Call get_current_weather with {"city": "Paris"} and see the raw JSON response
+Call get_stock_data with {"ticker": "NVDA", "period": "5d"} directly
+If a tool works in the Inspector but fails through the agent, the problem is in the agent/LLM layer. If it fails in both, it's a server/API-key issue.
+
+Swapping the LLM provider
+Edit agent.py — the build_llm() function at the top is the only place that's provider-specific. The agent receives the same ChatModel interface regardless of which branch runs. To use Anthropic instead:
+
+
+$env:LLM_PROVIDER = "anthropic"
+$env:ANTHROPIC_API_KEY = "sk-ant-..."
+pip install langchain-anthropic
+python agent.py
